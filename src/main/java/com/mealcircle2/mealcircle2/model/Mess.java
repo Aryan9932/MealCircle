@@ -34,7 +34,7 @@ public class Mess {
     private String ownerId;
     private String ownerPhone;
 
-    private List<String> customers;
+    private List<String> subscriptionIds;
 
     private double pricePerMonth;
 }

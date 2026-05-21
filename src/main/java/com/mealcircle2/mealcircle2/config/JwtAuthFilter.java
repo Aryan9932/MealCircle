@@ -1,5 +1,7 @@
 package com.mealcircle2.mealcircle2.config;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import com.mealcircle2.mealcircle2.service.CustomUserDetailsService;
 import com.mealcircle2.mealcircle2.util.JwtUtil;
 import jakarta.servlet.*;
@@ -26,16 +28,26 @@ public class JwtAuthFilter extends GenericFilter {
         String header = ((HttpServletRequest) request).getHeader("Authorization");
 
         if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            String email = jwtUtil.extractEmail(token);
+            try {
+                String token = header.substring(7);
+                String email = jwtUtil.extractEmail(token);
 
-            var userDetails = userService.loadUserByUsername(email);
+                var userDetails = userService.loadUserByUsername(email);
 
-            var auth = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities()
-            );
+                var auth = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (ExpiredJwtException e) {
+                SecurityContextHolder.clearContext();
+                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                        "JWT token expired. Please login again.");
+                return;
+            } catch (JwtException | IllegalArgumentException e) {
+                SecurityContextHolder.clearContext();
+                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token.");
+                return;
+            }
         }
 
         chain.doFilter(request, response);

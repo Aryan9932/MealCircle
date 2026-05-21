@@ -21,6 +21,10 @@ public class AuthService {
     }
 
     public String register(RegisterRequest req) {
+        if (repo.existsByEmail(req.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
         User user = User.builder()
                 .email(req.getEmail())
                 .password(encoder.encode(req.getPassword()))
@@ -32,7 +36,7 @@ public class AuthService {
     }
 
     public String login(AuthRequest req) {
-        User user = repo.findByEmail(req.getEmail())
+        User user = repo.findFirstByEmailOrderByIdDesc(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!encoder.matches(req.getPassword(), user.getPassword())) {

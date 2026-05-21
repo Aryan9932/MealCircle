@@ -1,0 +1,195 @@
+{
+  "info": {
+    "name": "MealCircle Subscription Attendance",
+    "_postman_id": "7a2c5c48-6d2d-4c8d-b48d-9f4e8a1f1d3a",
+    "description": "Collection to test subscription attendance routes with absent/present and 3 PM cutoff behavior.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Mark Absent (Before 3 PM)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/{{subscriptionId}}/absent?date={{todayDate}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "{{subscriptionId}}",
+            "absent"
+          ],
+          "query": [
+            {
+              "key": "date",
+              "value": "{{todayDate}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mark Absent (After 3 PM -> Auto Present)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/{{subscriptionId}}/absent?date={{todayDate}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "{{subscriptionId}}",
+            "absent"
+          ],
+          "query": [
+            {
+              "key": "date",
+              "value": "{{todayDate}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mark Present",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/{{subscriptionId}}/present?date={{todayDate}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "{{subscriptionId}}",
+            "present"
+          ],
+          "query": [
+            {
+              "key": "date",
+              "value": "{{todayDate}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Remove Absent",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/{{subscriptionId}}/absent?date={{todayDate}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "{{subscriptionId}}",
+            "absent"
+          ],
+          "query": [
+            {
+              "key": "date",
+              "value": "{{todayDate}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Subscription Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/{{subscriptionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "{{subscriptionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Subscriptions By Mess",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/mess/{{messId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "mess",
+            "{{messId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Subscriptions By Customer",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/customer/{{customerId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "customer",
+            "{{customerId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9090"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "REPLACE_SUBSCRIPTION_ID"
+    },
+    {
+      "key": "messId",
+      "value": "REPLACE_MESS_ID"
+    },
+    {
+      "key": "customerId",
+      "value": "REPLACE_CUSTOMER_ID"
+    },
+    {
+      "key": "todayDate",
+      "value": "2026-03-30"
+    }
+  ]
+}

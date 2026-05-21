@@ -2,7 +2,9 @@ package com.mealcircle2.mealcircle2.service.serviceImpl;
 
 import com.mealcircle2.mealcircle2.dto.MessRequest;
 import com.mealcircle2.mealcircle2.model.Mess;
+import com.mealcircle2.mealcircle2.model.Subscription;
 import com.mealcircle2.mealcircle2.repository.MessRepository;
+import com.mealcircle2.mealcircle2.repository.SubscriptionRepository;
 import com.mealcircle2.mealcircle2.service.MessService;
 import com.mealcircle2.mealcircle2.util.CloudinaryService;
 
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +21,9 @@ public class MessServiceImpl implements MessService {
 
     @Autowired
     private MessRepository messRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -44,7 +50,7 @@ public class MessServiceImpl implements MessService {
                 .ownerPhone(request.getOwnerPhone())
                 .pricePerMonth(request.getPricePerMonth())
                 .ownerId(ownerId)
-                .customers(new ArrayList<>())
+                .subscriptionIds(new ArrayList<>())
                 .imageUrl(imageUrl)
                 .build();
 
@@ -113,8 +119,55 @@ public class MessServiceImpl implements MessService {
 
         Mess mess = getMessById(messId);
 
-        if (!mess.getCustomers().contains(userId)) {
-            mess.getCustomers().add(userId);
+        // Check if user already subscribed
+        if (subscriptionRepository.findByCustomerIdAndMessId(userId, messId).isPresent()) {
+            throw new RuntimeException("User already subscribed to this mess");
+        }
+
+        // Create new subscription
+        Subscription subscription = Subscription.builder()
+                .customerId(userId)
+                .messId(messId)
+                .joiningDate(LocalDateTime.now())
+                .messEndingDate(LocalDateTime.now().toLocalDate().plusDays(30))
+                .absentDates(new ArrayList<>())
+                .buffer(10) // default 10 days
+                .presentDates(new ArrayList<>())
+                .moneyLeftToPay(0.0)
+                .build();
+
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
+
+        // Add subscription ID to mess
+        if (mess.getSubscriptionIds() == null) {
+            mess.setSubscriptionIds(new ArrayList<>());
+        }
+
+        mess.getSubscriptionIds().add(savedSubscription.getId());
+
+        return messRepository.save(mess);
+    }
+
+    @Override
+    public Mess getMessByCustomer(String customerId) {
+        Subscription subscription = subscriptionRepository.findByCustomerId(customerId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No mess assigned to this customer"));
+
+        return getMessById(subscription.getMessId());
+    }
+
+    @Override
+    public Mess updateMenuAndNoticeByOwner(String ownerId, String todaysMenu, String notices) {
+        Mess mess = getMessByOwner(ownerId);
+
+        if (todaysMenu != null) {
+            mess.setTodaysMenu(todaysMenu);
+        }
+
+        if (notices != null) {
+            mess.setNotices(notices);
         }
 
         return messRepository.save(mess);

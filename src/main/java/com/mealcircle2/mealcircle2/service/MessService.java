@@ -22,4 +22,8 @@ public interface MessService {
     void deleteMess(String id, String ownerId);
 
     Mess joinMess(String messId, String userId);
+
+    Mess getMessByCustomer(String customerId);
+
+    Mess updateMenuAndNoticeByOwner(String ownerId, String todaysMenu, String notices);
 }
