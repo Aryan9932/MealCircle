@@ -312,3 +312,22 @@ export async function updateOwnerMenuNotice({ token, todaysMenu, notices }) {
 
   return response.json();
 }
+
+/**
+ * Fetch messes sorted by nearest distance.
+ * @param {number} lat  - User's latitude
+ * @param {number} lng  - User's longitude
+ * @param {number} radius - Search radius in km (default 5)
+ * @returns {Promise<Array<{mess: object, distanceKm: number, distanceMeters: number}>>}
+ */
+export async function getNearbyMesses({ lat, lng, radius = 5 }) {
+  const url = `${API_BASE_URL}/mess/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const rawBody = await response.text();
+    throw new Error(rawBody || "Failed to fetch nearby messes");
+  }
+
+  return response.json();
+}

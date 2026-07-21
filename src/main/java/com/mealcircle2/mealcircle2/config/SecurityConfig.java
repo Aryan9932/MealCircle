@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/mess/all", "/api/mess/{id}").permitAll()
+                        .requestMatchers("/api/mess/all", "/api/mess/{id}", "/api/mess/nearby").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/mess/*/reviews", "/api/mess/*/rating").permitAll()
                         .requestMatchers("/api/mess/create").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/mess/*/reviews").hasRole("CUSTOMER")

@@ -2,6 +2,9 @@ package com.mealcircle2.mealcircle2.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -21,8 +24,13 @@ public class Mess {
     private String email;
     private String address;
 
+    // Raw doubles kept for backward compatibility
     private double latitude;
     private double longitude;
+
+    // GeoJSON Point for geospatial queries (coordinates: [longitude, latitude])
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    private GeoJsonPoint location;
 
     private String type;
 

@@ -50,6 +50,42 @@
   color: #476176;
 }
 
+/* ── View Mode Toggle (Nearby / All Messes) ─────────────────────────────── */
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 1.1rem;
+  background: #edf4f9;
+  border-radius: 50px;
+  padding: 4px;
+  border: 1.5px solid #c8dce9;
+}
+
+.toggle-btn {
+  padding: 0.45rem 1.25rem;
+  border: none;
+  border-radius: 50px;
+  background: transparent;
+  color: #476176;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover:not(.toggle-btn--active) {
+  background: #d5e8f3;
+  color: #153f57;
+}
+
+.toggle-btn--active {
+  background: linear-gradient(135deg, #FF6B35, #e85d20);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(255, 107, 53, 0.35);
+}
+
 .explore-info {
   margin: 0;
   padding: 0.85rem;
@@ -1381,4 +1417,115 @@ blockquote cite {
   .footer {
     flex-direction: column;
   }
+}
+
+/* ── Geolocation banner ──────────────────────────────────────────────────────── */
+
+.geo-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+.geo-banner--requesting {
+  background: linear-gradient(120deg, #e8f4fd, #d9edf9);
+  color: #1a567a;
+  border: 1px solid #b3d4ec;
+  animation: geo-pulse 1.6s ease-in-out infinite;
+}
+
+.geo-banner--denied {
+  background: linear-gradient(120deg, #fff4ec, #fde8d5);
+  color: #7a3a10;
+  border: 1px solid #f5c49a;
+}
+
+.geo-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+@keyframes geo-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
+/* ── Distance badge ──────────────────────────────────────────────────────────── */
+
+.mess-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.mess-distance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, #1e7ea1, #2596be);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(30, 126, 161, 0.35);
+}
+
+/* ── Radius slider ───────────────────────────────────────────────────────────── */
+
+.filter-group--radius {
+  width: 100%;
+}
+
+.filter-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2596be, #e0ecf5);
+  outline: none;
+  cursor: pointer;
+  margin: 0.4rem 0 0.2rem;
+}
+
+.filter-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1e7ea1;
+  box-shadow: 0 2px 8px rgba(30, 126, 161, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.filter-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.filter-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #1e7ea1;
+  cursor: pointer;
+}
+
+.filter-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #7a97aa;
 }

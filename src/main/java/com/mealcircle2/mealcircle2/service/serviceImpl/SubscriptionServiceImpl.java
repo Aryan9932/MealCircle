@@ -1,8 +1,11 @@
 package com.mealcircle2.mealcircle2.service.serviceImpl;
 
 import com.mealcircle2.mealcircle2.dto.SubscriptionResponse;
+import com.mealcircle2.mealcircle2.model.Mess;
 import com.mealcircle2.mealcircle2.model.Subscription;
+import com.mealcircle2.mealcircle2.repository.MessRepository;
 import com.mealcircle2.mealcircle2.repository.SubscriptionRepository;
+import com.mealcircle2.mealcircle2.service.EmailService;
 import com.mealcircle2.mealcircle2.service.SubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private MessRepository messRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public Subscription addAbsentDate(String subscriptionId, LocalDate absentDate) {
@@ -45,7 +54,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setBuffer(subscription.getBuffer() - 1);
         subscription.setMessEndingDate(subscription.getMessEndingDate().plusDays(1));
 
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+
+        // Send absent notification email asynchronously
+        try {
+            String messName = messRepository.findById(subscription.getMessId())
+                    .map(Mess::getMessName).orElse("your mess");
+            emailService.sendAbsentEmail(subscription.getCustomerId(), messName, absentDate.toString());
+        } catch (Exception e) {
+            System.err.println("[SubscriptionService] Could not send absent email: " + e.getMessage());
+        }
+
+        return saved;
     }
 
     @Override
@@ -56,7 +76,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         initializeAttendanceFields(subscription);
         markPresentForDate(subscription, presentDate);
 
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+
+        // Send present notification email asynchronously
+        try {
+            String messName = messRepository.findById(subscription.getMessId())
+                    .map(Mess::getMessName).orElse("your mess");
+            emailService.sendPresentEmail(subscription.getCustomerId(), messName, presentDate.toString());
+        } catch (Exception e) {
+            System.err.println("[SubscriptionService] Could not send present email: " + e.getMessage());
+        }
+
+        return saved;
     }
 
     @Override

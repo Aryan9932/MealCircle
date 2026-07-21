@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mealcircle2.mealcircle2.dto.MenuNoticeUpdateRequest;
 import com.mealcircle2.mealcircle2.dto.MessRequest;
+import com.mealcircle2.mealcircle2.dto.NearbyMessResponse;
 import com.mealcircle2.mealcircle2.service.MessService;
 
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -214,4 +216,31 @@ public class MessController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-}
+
+    /**
+     * GET /api/mess/nearby?lat={lat}&lng={lng}&radius={radiusKm}
+     *
+     * Returns messes within {@code radius} km (default 5 km) of the given
+     * coordinates, sorted nearest-first, each enriched with distanceKm.
+     */
+    @GetMapping("/nearby")
+    public ResponseEntity<?> getMessesNearby(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "5.0") double radius) {
+
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            return ResponseEntity.badRequest().body("Invalid coordinates");
+        }
+        if (radius <= 0 || radius > 100) {
+            return ResponseEntity.badRequest().body("Radius must be between 0 and 100 km");
+        }
+
+        try {
+            List<NearbyMessResponse> results = messService.getMessesNearby(lat, lng, radius);
+            return ResponseEntity.ok(results);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+}
