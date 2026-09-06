@@ -2,11 +2,12 @@ package com.mealcircle2.mealcircle2.service.serviceImpl;
 
 import com.mealcircle2.mealcircle2.dto.MessRequest;
 import com.mealcircle2.mealcircle2.dto.NearbyMessResponse;
+import com.mealcircle2.mealcircle2.dto.SubscriptionEmailEvent;
+import com.mealcircle2.mealcircle2.messaging.SubscriptionEventProducer;
 import com.mealcircle2.mealcircle2.model.Mess;
 import com.mealcircle2.mealcircle2.model.Subscription;
 import com.mealcircle2.mealcircle2.repository.MessRepository;
 import com.mealcircle2.mealcircle2.repository.SubscriptionRepository;
-import com.mealcircle2.mealcircle2.service.EmailService;
 import com.mealcircle2.mealcircle2.service.MessService;
 import com.mealcircle2.mealcircle2.util.CloudinaryService;
 
@@ -43,7 +44,7 @@ public class MessServiceImpl implements MessService {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private EmailService emailService;
+    private SubscriptionEventProducer subscriptionEventProducer;
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -175,16 +176,17 @@ public class MessServiceImpl implements MessService {
 
         Mess savedMess = messRepository.save(mess);
 
-        // Send welcome email asynchronously (non-blocking)
+        // Publish subscription event to RabbitMQ — email consumer handles the actual send
         try {
-            emailService.sendWelcomeEmail(
-                    userId,
-                    mess.getMessName(),
-                    savedSubscription.getJoiningDate().toLocalDate().toString(),
-                    savedSubscription.getMessEndingDate().toString()
-            );
+            SubscriptionEmailEvent event = SubscriptionEmailEvent.builder()
+                    .customerEmail(userId)
+                    .messName(mess.getMessName())
+                    .joiningDate(savedSubscription.getJoiningDate().toLocalDate().toString())
+                    .endingDate(savedSubscription.getMessEndingDate().toString())
+                    .build();
+            subscriptionEventProducer.publishSubscriptionEvent(event);
         } catch (Exception e) {
-            System.err.println("[MessService] Could not send welcome email: " + e.getMessage());
+            System.err.println("[MessService] Could not publish subscription event to RabbitMQ: " + e.getMessage());
         }
 
         return savedMess;

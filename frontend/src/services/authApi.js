@@ -50,7 +50,25 @@ export async function getCurrentUser(token) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch current user");
+    let errorMessage = "Session expired. Please log in again.";
+    const rawBody = await response.text();
+    if (rawBody) {
+      try {
+        const data = JSON.parse(rawBody);
+        if (typeof data === "string") {
+          errorMessage = data;
+        } else if (data?.message) {
+          errorMessage = data.message;
+        } else {
+          errorMessage = rawBody;
+        }
+      } catch {
+        errorMessage = rawBody;
+      }
+    }
+    const err = new Error(errorMessage);
+    err.status = response.status;
+    throw err;
   }
 
   return response.json();

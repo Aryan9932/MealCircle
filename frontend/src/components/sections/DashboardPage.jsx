@@ -83,7 +83,7 @@ function includesDate(list, dateValue) {
   return list.some((entry) => normalizeToDateKey(entry) === target);
 }
 
-function DashboardPage({ isAuthenticated, token, onOpenAuth }) {
+function DashboardPage({ isAuthenticated, token, onOpenAuth, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
@@ -199,7 +199,13 @@ function DashboardPage({ isAuthenticated, token, onOpenAuth }) {
         }
       } catch (loadError) {
         if (isMounted) {
-          setError(loadError.message || "Failed to load dashboard data.");
+          // If the token is expired/invalid, clear it and prompt re-login
+          if (loadError.status === 401 || loadError.status === 403) {
+            onLogout();
+            onOpenAuth();
+          } else {
+            setError(loadError.message || "Failed to load dashboard data.");
+          }
         }
       } finally {
         if (isMounted) {

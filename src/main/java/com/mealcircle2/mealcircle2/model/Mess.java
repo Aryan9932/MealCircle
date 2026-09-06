@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+import java.util.Map;
 
 @Document(collection = "mess")
 @Getter
@@ -45,4 +46,22 @@ public class Mess {
     private List<String> subscriptionIds;
 
     private double pricePerMonth;
+
+    /**
+     * Determines which {@link com.mealcircle2.mealcircle2.strategy.MessAttendancePolicy}
+     * is applied for this mess.  Accepted values: STRICT | BUFFERED | COUPON | GRACE_PERIOD.
+     * Defaults to "BUFFERED" when null (backward-compatible).
+     */
+    private String attendancePolicyType;
+
+    /**
+     * Policy-specific configuration key-value pairs.
+     * Examples:
+     * <ul>
+     *   <li>BUFFERED  → {@code {"maxBuffer": "10"}}</li>
+     *   <li>COUPON    → {@code {"dailyCouponLimit": "5"}}</li>
+     *   <li>GRACE_PERIOD → {@code {"maxBuffer": "5", "penaltyPerDay": "50.0"}}</li>
+     * </ul>
+     */
+    private Map<String, String> policyConfig;
 }

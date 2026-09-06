@@ -114,6 +114,7 @@ function App() {
               isAuthenticated={isAuthenticated}
               token={token}
               onOpenAuth={() => setIsAuthOpen(true)}
+              onLogout={handleLogout}
             />
           }
         />

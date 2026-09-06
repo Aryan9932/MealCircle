@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +21,6 @@ public class EmailServiceImpl implements EmailService {
     // -------------------------------------------------------------------------
     // Welcome Email
     // -------------------------------------------------------------------------
-    @Async
     @Override
     public void sendWelcomeEmail(String customerEmail, String messName, String joiningDate, String endingDate) {
         String subject = "Welcome to " + messName + " - Your Subscription is Confirmed!";
@@ -33,7 +31,6 @@ public class EmailServiceImpl implements EmailService {
     // -------------------------------------------------------------------------
     // Absent Email
     // -------------------------------------------------------------------------
-    @Async
     @Override
     public void sendAbsentEmail(String customerEmail, String messName, String date) {
         String subject = "Absence Recorded - " + messName + " (" + date + ")";
@@ -44,7 +41,6 @@ public class EmailServiceImpl implements EmailService {
     // -------------------------------------------------------------------------
     // Present Email
     // -------------------------------------------------------------------------
-    @Async
     @Override
     public void sendPresentEmail(String customerEmail, String messName, String date) {
         String subject = "Attendance Confirmed - " + messName + " (" + date + ")";

@@ -1,12 +1,15 @@
 package com.mealcircle2.mealcircle2.service.serviceImpl;
 
+import com.mealcircle2.mealcircle2.dto.AttendanceEmailEvent;
 import com.mealcircle2.mealcircle2.dto.SubscriptionResponse;
+import com.mealcircle2.mealcircle2.messaging.SubscriptionEventProducer;
 import com.mealcircle2.mealcircle2.model.Mess;
 import com.mealcircle2.mealcircle2.model.Subscription;
 import com.mealcircle2.mealcircle2.repository.MessRepository;
 import com.mealcircle2.mealcircle2.repository.SubscriptionRepository;
-import com.mealcircle2.mealcircle2.service.EmailService;
 import com.mealcircle2.mealcircle2.service.SubscriptionService;
+import com.mealcircle2.mealcircle2.strategy.MessAttendancePolicy;
+import com.mealcircle2.mealcircle2.strategy.MessPolicyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +30,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private MessRepository messRepository;
 
     @Autowired
-    private EmailService emailService;
+    private SubscriptionEventProducer subscriptionEventProducer;
+
+    @Autowired
+    private MessPolicyFactory messPolicyFactory;
 
     @Override
     public Subscription addAbsentDate(String subscriptionId, LocalDate absentDate) {
@@ -36,33 +42,33 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         initializeAttendanceFields(subscription);
 
-        if (subscription.getAbsentDates().contains(absentDate)) {
-            return subscription;
-        }
-
+        // Cutoff-time guard: if marking absent today after 15:00, auto-mark present instead
         if (isToday(absentDate) && isAfterOrAtCutoff()) {
             markPresentForDate(subscription, absentDate);
             return subscriptionRepository.save(subscription);
         }
 
-        if (subscription.getBuffer() <= 0) {
-            throw new RuntimeException("No buffer left. Cannot mark absent.");
-        }
+        // Resolve the mess and its attendance policy
+        Mess mess = messRepository.findById(subscription.getMessId())
+                .orElseThrow(() -> new RuntimeException("Mess not found for subscription"));
+        MessAttendancePolicy policy = messPolicyFactory.getPolicy(mess.getAttendancePolicyType());
 
-        subscription.getAbsentDates().add(absentDate);
-        subscription.getPresentDates().remove(absentDate);
-        subscription.setBuffer(subscription.getBuffer() - 1);
-        subscription.setMessEndingDate(subscription.getMessEndingDate().plusDays(1));
+        // Delegate all rule logic to the strategy
+        policy.applyAbsent(subscription, absentDate, mess.getPolicyConfig());
 
         Subscription saved = subscriptionRepository.save(subscription);
 
-        // Send absent notification email asynchronously
+        // Publish absent event to RabbitMQ — consumer sends the email
         try {
-            String messName = messRepository.findById(subscription.getMessId())
-                    .map(Mess::getMessName).orElse("your mess");
-            emailService.sendAbsentEmail(subscription.getCustomerId(), messName, absentDate.toString());
+            AttendanceEmailEvent event = AttendanceEmailEvent.builder()
+                    .customerEmail(subscription.getCustomerId())
+                    .messName(mess.getMessName())
+                    .date(absentDate.toString())
+                    .type("ABSENT")
+                    .build();
+            subscriptionEventProducer.publishAttendanceEvent(event);
         } catch (Exception e) {
-            System.err.println("[SubscriptionService] Could not send absent email: " + e.getMessage());
+            System.err.println("[SubscriptionService] Could not publish absent event to RabbitMQ: " + e.getMessage());
         }
 
         return saved;
@@ -74,17 +80,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
 
         initializeAttendanceFields(subscription);
-        markPresentForDate(subscription, presentDate);
+
+        // Resolve the mess and its attendance policy
+        Mess mess = messRepository.findById(subscription.getMessId())
+                .orElseThrow(() -> new RuntimeException("Mess not found for subscription"));
+        MessAttendancePolicy policy = messPolicyFactory.getPolicy(mess.getAttendancePolicyType());
+
+        // Delegate all rule logic to the strategy
+        policy.applyPresent(subscription, presentDate, mess.getPolicyConfig());
 
         Subscription saved = subscriptionRepository.save(subscription);
 
-        // Send present notification email asynchronously
+        // Publish present event to RabbitMQ — consumer sends the email
         try {
-            String messName = messRepository.findById(subscription.getMessId())
-                    .map(Mess::getMessName).orElse("your mess");
-            emailService.sendPresentEmail(subscription.getCustomerId(), messName, presentDate.toString());
+            AttendanceEmailEvent event = AttendanceEmailEvent.builder()
+                    .customerEmail(subscription.getCustomerId())
+                    .messName(mess.getMessName())
+                    .date(presentDate.toString())
+                    .type("PRESENT")
+                    .build();
+            subscriptionEventProducer.publishAttendanceEvent(event);
         } catch (Exception e) {
-            System.err.println("[SubscriptionService] Could not send present email: " + e.getMessage());
+            System.err.println("[SubscriptionService] Could not publish present event to RabbitMQ: " + e.getMessage());
         }
 
         return saved;
